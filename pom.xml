@@ -12,6 +12,7 @@
         <module>common</module>
         <module>connection</module>
         <module>core</module>
+        <module>example</module>
     </modules>
 
     <properties>

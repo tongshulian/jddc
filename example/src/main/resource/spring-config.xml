@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.1.xsd
+    ">
+
+    <!-- 监听配置 -->
+    <bean id="connectorConfig" class="com.jd.jddc.connection.ConnectorConfig">
+        <property name="hostName" value="192.168.147.87" />
+        <property name="port" value="3306" />
+        <property name="defaultSchema" value="jdlottery" />
+        <property name="username" value="jdlottery" />
+        <property name="password" value="jdlottery" />
+    </bean>
+
+    <!-- 注册connectorFactory -->
+    <bean id="connectorFactory" class="com.jd.jddc.connection.factory.DefaultConnectorFactory">
+        <property name="config" ref="connectorConfig" />
+    </bean>
+
+    <bean id="demoHandler" class="com.jd.jddc.example.DemoLogHandler"/>
+    <!-- 同步服务启动 -->
+    <bean id="dbSync" class="com.jd.jddc.core.sync.BinLogSync" init-method="init">
+        <!-- 责任链，默认只处理insert、update数据库操作；若无特殊需要请使用默认配置
+        <property name="chain" value=""/>-->
+
+        <!-- 默认日志字符编码为utf-8
+        <property name="charset" value="" />-->
+
+        <!-- 设置连接工厂类 -->
+        <property name="factory" ref="connectorFactory" />
+
+        <!--
+            com.jd.jddc.core.handler.LogHandler的实现类，日志同步过来后，对日志变更数据进行处理；
+            根据自身业务需要去实现的，是必须要实现的类
+        -->
+        <property name="handler" ref="demoHandler" />
+        <!--
+            初始化时，获取日志同步位置的偏移量；若不传则默认从日志的开端开始
+            <property name="logPositionOffset" value="0" />
+        -->
+        <!--
+            存储获取日志同步位置的服务，默认存储在应用类路径下的sync.log文件中；建议自己实现，不要使用默认存储在本地文件中的模式
+            <property name="positionService" ref="" />
+        -->
+    </bean>
+</beans>

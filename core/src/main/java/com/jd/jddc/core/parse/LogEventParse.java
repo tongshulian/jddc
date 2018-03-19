@@ -37,7 +37,7 @@ public class LogEventParse {
     public void parse(LogEvent event){
         RowsLogEvent rowsEvent = chain.invoke(event);
 
-        // TODO Update latestPosition;
+        positionManager.updateLogPosition(event.getLogPos());
         if(rowsEvent != null && dbName.equals(rowsEvent.getTable().getDbName())) {
             handler.handle(DataRowConvertor.covert(rowsEvent, charset));
         }

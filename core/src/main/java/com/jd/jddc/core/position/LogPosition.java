@@ -1,5 +1,6 @@
 package com.jd.jddc.core.position;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
  * Date:2018/2/25.
  * Version:1.0
  */
-public class LogPosition {
+public class LogPosition implements Serializable{
     private String currentHost;
     private String currentFileName;
     private long position;
@@ -62,5 +63,16 @@ public class LogPosition {
 
     public void setColumnValue(Comparable columnValue) {
         this.columnValue = columnValue;
+    }
+
+    @Override
+    public String toString() {
+        return "LogPosition{" +
+                "currentHost='" + currentHost + '\'' +
+                ", currentFileName='" + currentFileName + '\'' +
+                ", position=" + position +
+                ", columnValue=" + columnValue +
+                ", hisLogPositions=" + hisLogPositions +
+                '}';
     }
 }

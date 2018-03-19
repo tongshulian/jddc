@@ -3,12 +3,14 @@ package com.jd.jddc.core.position;
 import com.alibaba.otter.canal.parse.driver.mysql.packets.server.ResultSetPacket;
 import com.jd.jddc.connection.Connector;
 import com.jd.jddc.connection.SqlCmdExecutor;
+import com.jd.jddc.core.buffer.PositionBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Dept:日志位置管理类
@@ -19,7 +21,17 @@ import java.util.List;
 public class LogPositionManager {
     private static final Logger log = LoggerFactory.getLogger(LogPositionManager.class);
     public static final long BINLOG_START_OFFEST = 4L;
-    private LogPositionService positionService;
+    private int flushSize = 128;
+    private PositionBuffer positionBuffer;
+    private LogPositionService positionService = new LogPositionLocalService();
+
+    public LogPositionManager(){
+        positionBuffer = new PositionBuffer(flushSize);
+    }
+
+    public LogPositionManager(int flushSize){
+        positionBuffer = new PositionBuffer(flushSize);
+    }
 
     public LogPosition findStartLogPosition(Connector connector, int offset){
         LogPosition logPosition = null;
@@ -47,6 +59,8 @@ public class LogPositionManager {
             }
         }
 
+        // 缓冲日志开始位置
+        positionBuffer.addLogPosition(logPosition, positionService);
         return logPosition;
     }
 
@@ -70,17 +84,11 @@ public class LogPositionManager {
     }
 
     public void addLogPosition(LogPosition logPosition){
-        if(positionService == null){
-            positionService = new LogPositionLocalService();
-        }
-        positionService.saveLogPosition(logPosition);
+        positionBuffer.addLogPosition(logPosition, positionService);
     }
 
-    public void updateLogPosition(LogPosition logPosition){
-        if(positionService == null){
-            positionService = new LogPositionLocalService();
-        }
-        positionService.saveLogPosition(logPosition);
+    public void updateLogPosition(long position){
+        positionBuffer.addLogPosition(position, positionService);
     }
 
     public LogPositionService getPositionService() {

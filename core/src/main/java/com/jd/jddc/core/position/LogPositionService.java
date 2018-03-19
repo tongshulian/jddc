@@ -14,5 +14,5 @@ public interface LogPositionService {
      * @param logPosition
      * @return
      */
-    int saveLogPosition(LogPosition logPosition);
+    int saveOrUpdateLogPosition(LogPosition logPosition);
 }

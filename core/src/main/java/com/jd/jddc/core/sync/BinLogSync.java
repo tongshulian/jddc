@@ -26,22 +26,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Dept: 第一版暂不支持事务性的同步，只监听数据库中的一张表，只同步insert,update,delete操作
- * 一台机器限制，最多能够启动10个。
+ * Dept: 第一版暂不支持事务性的同步，只监听数据库中的一张表，只同步insert、update操作
+ * 一台机器限制，最多能够启动10个BinLogSync。
  * User: tongshulian
  * Date:2018/2/25.
  * Version:1.0
  */
 public class BinLogSync {
     private static final Logger log = LoggerFactory.getLogger(BinLogSync.class);
-    private static int MAX_EXISTS = 10;
-    private static AtomicInteger exists = new AtomicInteger(0);
-    private static AtomicBoolean running = new AtomicBoolean(false);
-    private static AtomicLong slaveId = new AtomicLong(System.currentTimeMillis());
+
+    private static final AtomicLong slaveId = new AtomicLong(System.currentTimeMillis());
+    public static int MAX_EXISTS = 10;
+    private final AtomicInteger exists = new AtomicInteger(0);
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final LogPositionManager logPositionManager = new LogPositionManager();
+
     private HeartBeatTask heartBeatTask;
     private LogPosition startPosition;
-    private LogPositionManager logPositionManager = new LogPositionManager();
-
     private LogPositionService positionService;
     private ConnectorFactory factory;
     private int logPositionOffset;
@@ -115,6 +116,7 @@ public class BinLogSync {
                                 log.error(this.getName() + " 同步完后，关闭连接异常！", e);
                             }
                         }
+                        heartBeatTask.stop();
                     }
 
                     if (running.get()) {
@@ -136,6 +138,8 @@ public class BinLogSync {
             e.printStackTrace();
         }
     }
+
+
 
     public void destroy(){
         // 关闭当前
@@ -166,10 +170,6 @@ public class BinLogSync {
         return slaveId.get();
     }
 
-    public void setSlaveId(long slaveId) {
-        BinLogSync.slaveId = new AtomicLong(slaveId);
-    }
-
     public int getLogPositionOffset() {
         return logPositionOffset;
     }
@@ -182,12 +182,8 @@ public class BinLogSync {
         logPositionManager.setPositionService(positionService);
     }
 
-    public LogEventParse getParse() {
-        return parse;
-    }
-
-    public void setParse(LogEventParse parse) {
-        this.parse = parse;
+    public LogPositionService getPositionService() {
+        return positionService;
     }
 
     public OperationFilterChain getChain() {
